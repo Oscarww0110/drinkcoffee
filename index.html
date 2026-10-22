@@ -1,0 +1,1382 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f6f1ea">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="喝什么">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>喝什么 · 饮料记录</title>
+<style>
+:root{
+  --bg:#f6f1ea; --card:#fff; --text:#211f1c; --muted:#8b8378; --line:#ece5da;
+  --accent:#8a5a3a; --cafe:#bf7a35; --water:#3f86ad; --money:#4f8a58; --danger:#c0473a;
+  --radius:18px; --shadow:0 1px 2px rgba(60,45,30,.05), 0 8px 24px rgba(60,45,30,.06);
+  --glass:rgba(255,255,255,.86);
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --bg:#151413; --card:#201e1c; --text:#f2ede6; --muted:#9a938a; --line:#332f2b;
+    --accent:#c99a72; --cafe:#d79450; --water:#6aa9cc; --money:#7bb183; --danger:#e07b6d;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+    --glass:rgba(32,30,28,.86);
+  }
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text); font-size:16px; line-height:1.45;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased; overscroll-behavior-y:none;
+}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+input,select{font:inherit;color:inherit}
+h1,h2,h3,p,ul{margin:0;padding:0}
+ul{list-style:none}
+.hidden{display:none!important}
+.small{font-size:12px}
+.muted{color:var(--muted)}
+#app{max-width:520px;margin:0 auto;padding:18px 16px calc(150px + env(safe-area-inset-bottom))}
+
+/* ---------- header ---------- */
+.top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin:6px 2px 20px}
+.date{font-size:13px;color:var(--muted);letter-spacing:.02em}
+.hello{font-size:23px;font-weight:700;letter-spacing:-.01em;margin-top:2px}
+.icon-btn{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;color:var(--muted);font-size:18px;background:var(--card);box-shadow:var(--shadow);flex:none}
+.icon-btn:active{transform:scale(.95)}
+
+/* ---------- cards ---------- */
+.card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:12px}
+.card h1{font-size:15px;font-weight:600;letter-spacing:.01em}
+.label{font-size:13px;color:var(--muted)}
+.big{font-size:36px;font-weight:700;letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1.1}
+.big small{font-size:14px;font-weight:500;color:var(--muted);margin-left:3px;letter-spacing:0}
+.big2{font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.big2 small{font-size:12px;font-weight:500;color:var(--muted);margin-left:2px}
+
+/* ---------- hero ---------- */
+.hero{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 20px 18px}
+.hero .hint{margin-top:6px;font-size:13px;color:var(--muted)}
+.ring-wrap{position:relative;width:96px;height:96px;flex:none}
+.ring{width:96px;height:96px;transform:rotate(-90deg)}
+.ring circle{fill:none;stroke-width:9;stroke-linecap:round}
+.ring-bg{stroke:var(--line)}
+.ring-fg{stroke:var(--cafe);stroke-dasharray:263.9;stroke-dashoffset:263.9;transition:stroke-dashoffset .55s cubic-bezier(.2,.7,.3,1),stroke .3s}
+.ring-pct{position:absolute;inset:0;display:grid;place-items:center;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted)}
+.over .ring-fg{stroke:var(--danger)}
+.over .ring-pct{color:var(--danger)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.mini{padding:16px;margin:0}
+.bar{height:7px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;border-radius:99px;transition:width .45s cubic-bezier(.2,.7,.3,1)}
+.bar i.water{background:var(--water)}
+.bar i.money{background:var(--money)}
+.mini.over .bar i{background:var(--danger)}
+.mini .hint{font-size:12px;color:var(--muted);margin-top:7px}
+.spark{display:flex;align-items:flex-end;gap:3px;height:26px;margin-top:10px}
+.spark i{flex:1;background:var(--money);opacity:.2;border-radius:3px;min-height:2px;transition:height .4s}
+.spark i.today{opacity:.95}
+.linechart{display:block;width:100%;height:112px;overflow:visible}
+.lineaxis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px}
+.chart-empty{height:112px;display:grid;place-items:center;font-size:13px;color:var(--muted)}
+
+.subrow{display:flex;justify-content:space-between;padding:14px 18px;margin-bottom:22px}
+.subrow > div{display:flex;flex-direction:column;gap:1px}
+.subrow b{font-size:17px;font-weight:650;font-variant-numeric:tabular-nums}
+.subrow b small{font-size:11px;font-weight:500;color:var(--muted);margin-left:2px}
+
+/* ---------- log list ---------- */
+.section-head{display:flex;align-items:baseline;justify-content:space-between;margin:0 2px 10px}
+.section-head h2{font-size:15px;font-weight:600}
+.link{font-size:13px;color:var(--accent);font-weight:500}
+.loglist > li{display:flex;align-items:center;gap:12px;background:var(--card);border-radius:15px;padding:13px 14px;margin-bottom:8px;box-shadow:var(--shadow)}
+.log-time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none;width:42px}
+.log-main{flex:1;min-width:0}
+.log-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-meta{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-price{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted);flex:none}
+.del{width:30px;height:30px;border-radius:50%;color:var(--muted);display:grid;place-items:center;font-size:15px;flex:none}
+.del:active{background:var(--line)}
+.empty{text-align:center;color:var(--muted);font-size:14px;padding:34px 16px;line-height:1.7}
+
+/* ---------- charts ---------- */
+.card-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:14px}
+.chart{display:flex;align-items:flex-end;gap:6px;height:120px}
+.bar-col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;gap:5px}
+.bar-val{font-size:10px;color:var(--muted);font-variant-numeric:tabular-nums;opacity:.85}
+.bar-track{width:100%;height:100%;display:flex;align-items:flex-end}
+.bar-fill{width:100%;border-radius:7px 7px 4px 4px;background:var(--cafe);opacity:.85;min-height:3px;transition:height .5s cubic-bezier(.2,.7,.3,1)}
+.bar-col.money .bar-fill{background:var(--money)}
+.bar-lbl{font-size:11px;color:var(--muted)}
+.bar-col.today .bar-lbl{color:var(--text);font-weight:600}
+.kv-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 10px;margin-top:14px}
+.kv .k{font-size:12px;color:var(--muted)}
+.kv .v{font-size:19px;font-weight:650;font-variant-numeric:tabular-nums;margin-top:1px}
+.kv .v small{font-size:11px;font-weight:500;color:var(--muted);margin-left:2px}
+.rank li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line);font-size:14px}
+.rank li:first-child{border-top:0}
+.rank .n{display:flex;align-items:center;gap:9px;min-width:0}
+.rank .idx{width:19px;height:19px;border-radius:7px;background:var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted);flex:none}
+.rank .r-name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank .r-val{color:var(--muted);font-size:13px;font-variant-numeric:tabular-nums;flex:none}
+
+/* ---------- settings ---------- */
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.row:first-of-type{border-top:0}
+.row > span{font-size:15px}
+.field{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+.field input{width:76px;text-align:right;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:7px 9px;font-size:15px;font-variant-numeric:tabular-nums}
+.mgr li{display:flex;align-items:center;gap:10px;padding:11px 0;border-top:1px solid var(--line)}
+.mgr li:first-child{border-top:0}
+.mgr .m-main{flex:1;min-width:0}
+.mgr .m-name{font-size:15px;font-weight:550;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mgr .m-sub{font-size:12px;color:var(--muted);margin-top:1px}
+.mgr .m-edit{font-size:13px;color:var(--accent);flex:none;padding:6px 2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:46px;padding:0 18px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:15px;font-weight:550}
+.btn:active{transform:scale(.985)}
+.btn.primary{background:var(--accent);border-color:transparent;color:#fff;font-weight:600;flex:1}
+.btn.ghost{background:transparent;border-style:dashed;width:100%;margin-top:10px;color:var(--muted);height:42px;font-size:14px}
+.btn.small{height:38px;font-size:13px}
+.btn.danger-text{color:var(--danger);border-color:transparent;background:transparent;height:40px;width:100%;margin-top:4px;font-size:13px}
+.btnrow{display:flex;gap:10px;margin-top:4px}
+.btnrow > .btn{flex:1}
+.fine{font-size:12px;color:var(--muted);line-height:1.65;margin-top:12px}
+details summary{cursor:pointer;font-size:13px;color:var(--accent);outline:none}
+details p{font-size:13px;color:var(--muted);line-height:1.75;margin-top:10px}
+.sec-title{font-size:13px;color:var(--muted);margin:22px 4px 8px;font-weight:500}
+
+/* ---------- nav & fab ---------- */
+.nav{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;justify-content:center;padding:0 16px calc(10px + env(safe-area-inset-bottom));pointer-events:none}
+.nav-inner{pointer-events:auto;display:flex;gap:2px;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:99px;padding:5px;box-shadow:var(--shadow)}
+.nav-inner button{padding:9px 20px;border-radius:99px;font-size:13px;color:var(--muted);font-weight:550;transition:background .18s,color .18s}
+.nav-inner button.on{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(60,45,30,.12)}
+.fabbar{position:fixed;left:0;right:0;bottom:calc(76px + env(safe-area-inset-bottom));z-index:31;display:flex;justify-content:center;pointer-events:none}
+.fabbar-inner{width:100%;max-width:520px;padding:0 18px;display:flex;justify-content:flex-end}
+.fab{pointer-events:auto;width:56px;height:56px;border-radius:19px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:26px;font-weight:300;box-shadow:0 6px 18px rgba(138,90,58,.36),0 2px 4px rgba(0,0,0,.1);transition:transform .15s}
+.fab:active{transform:scale(.93)}
+
+/* ---------- sheet ---------- */
+.sheet-wrap{position:fixed;inset:0;z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.backdrop{position:absolute;inset:0;background:rgba(28,20,12,.44);backdrop-filter:blur(2px);animation:fade .18s ease}
+.sheet{position:relative;width:100%;max-width:520px;max-height:92vh;background:var(--card);border-radius:26px 26px 0 0;display:flex;flex-direction:column;animation:up .24s cubic-bezier(.2,.8,.3,1)}
+@keyframes up{from{transform:translateY(30px);opacity:.5}to{transform:none;opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.sheet-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 6px;flex:none}
+.sheet-head h1{font-size:17px;font-weight:650}
+.sheet-body{overflow-y:auto;padding:6px 18px 18px;-webkit-overflow-scrolling:touch}
+.sheet-foot{flex:none;padding:12px 18px calc(16px + env(safe-area-inset-bottom));border-top:1px solid var(--line);display:flex;gap:10px}
+.sheet .icon-btn{background:var(--bg);box-shadow:none}
+.field-label{font-size:12px;color:var(--muted);margin:16px 0 8px;font-weight:500;letter-spacing:.01em}
+.field-label:first-child{margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{padding:9px 14px;border-radius:12px;border:1px solid var(--line);background:transparent;font-size:14px;color:var(--text);transition:all .15s}
+.chip.on{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:550}
+.chip:active{transform:scale(.97)}
+.mlrow{display:flex;align-items:center;gap:10px}
+.step{width:48px;height:52px;border-radius:14px;background:var(--bg);border:1px solid var(--line);font-size:22px;color:var(--muted);flex:none}
+.step:active{background:var(--line)}
+.mlrow input{flex:1;width:100%;height:52px;text-align:center;font-size:24px;font-weight:650;font-variant-numeric:tabular-nums;border:1px solid var(--line);border-radius:14px;background:var(--bg)}
+.input{width:100%;height:46px;padding:0 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);font-size:16px}
+.moneyrow{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 12px;height:46px;min-width:0}
+.moneyrow span{color:var(--muted)}
+.moneyrow input{flex:1;min-width:0;width:100%;border:0;background:none;height:44px;font-size:16px;font-variant-numeric:tabular-nums;outline:none}
+.preview{margin-top:18px;background:var(--bg);border-radius:14px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.7;font-variant-numeric:tabular-nums}
+.preview b{color:var(--text);font-weight:600}
+.comp{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.comp select{flex:1.4;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 8px;font-size:15px;min-width:0}
+.comp input{flex:1;height:44px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:0 10px;font-size:15px;min-width:0}
+.comp .rm{width:34px;height:34px;border-radius:50%;color:var(--muted);flex:none;display:grid;place-items:center;font-size:17px}
+.check{display:flex;align-items:center;gap:9px;font-size:14px;margin-top:16px;color:var(--text)}
+.check input{width:19px;height:19px}
+.num-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.num-grid > *{min-width:0}
+.warn{font-size:12px;color:var(--danger);margin-top:8px}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(142px + env(safe-area-inset-bottom));z-index:80;background:rgba(33,29,25,.94);color:#fff;border-radius:13px;padding:11px 12px 11px 16px;font-size:13px;display:flex;align-items:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:88vw;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);pointer-events:auto}
+.toast button{color:#f0c48c;font-size:13px;font-weight:600;flex:none}
+.banner{background:var(--cafe);color:#fff;font-size:12px;text-align:center;padding:6px 12px;border-radius:10px;margin-bottom:14px}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="demoBanner" class="banner hidden">演示模式 · 这里的记录不会被保存</div>
+
+  <header class="top">
+    <div>
+      <div class="date" id="topDate"></div>
+      <h1 class="hello" id="topHello">今天喝了什么？</h1>
+    </div>
+    <button class="icon-btn" id="btnSettingsTop" aria-label="设置">⚙</button>
+  </header>
+
+  <main>
+    <!-- ============ 今日 ============ -->
+    <section id="view-today" class="view">
+      <div class="card hero" id="cafCard">
+        <div>
+          <div class="label">今日咖啡因</div>
+          <div class="big"><span id="cafVal">0</span><small>mg</small></div>
+          <div class="hint" id="cafHint">上限 400mg</div>
+        </div>
+        <div class="ring-wrap">
+          <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="ring-bg" cx="50" cy="50" r="42"/>
+            <circle class="ring-fg" id="cafRing" cx="50" cy="50" r="42"/>
+          </svg>
+          <div class="ring-pct" id="cafPct">0%</div>
+        </div>
+      </div>
+
+      <div class="grid2">
+        <div class="card mini" id="waterCard">
+          <div class="label">水分摄入</div>
+          <div class="big2"><span id="waterVal">0</span><small>ml</small></div>
+          <div class="bar"><i id="waterBar" class="water" style="width:0"></i></div>
+          <div class="hint" id="waterHint">目标 1500ml</div>
+        </div>
+        <div class="card mini" id="moneyCard">
+          <div class="label">今日花费</div>
+          <div class="big2">¥<span id="moneyVal">0</span></div>
+          <div class="spark" id="moneySpark"></div>
+          <div class="hint" id="moneyHint">本月 ¥0</div>
+        </div>
+      </div>
+
+      <div class="card subrow">
+        <div><span class="label">蛋白质</span><b><span id="proteinVal">0</span><small>g</small></b></div>
+        <div><span class="label">糖</span><b><span id="sugarVal">0</span><small>g</small></b></div>
+        <div><span class="label">杯数</span><b><span id="cupVal">0</span><small>杯</small></b></div>
+      </div>
+
+      <div class="section-head">
+        <h2>今天的记录</h2>
+        <button class="link" id="btnAddInline">+ 添加</button>
+      </div>
+      <ul class="loglist" id="logList"></ul>
+      <div class="empty hidden" id="logEmpty">还没有记录<br><span class="small">点右下角的 ＋ 记下第一杯</span></div>
+    </section>
+
+    <!-- ============ 统计 ============ -->
+    <section id="view-stats" class="view hidden">
+      <div class="card">
+        <div class="card-head"><h1>近 7 天消费</h1><span class="small muted" id="weekMoney">—</span></div>
+        <div id="moneyChart7"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h1>近 30 天消费</h1><span class="small muted" id="monthMoney">—</span></div>
+        <div id="moneyChart30"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h1>近 7 天咖啡因</h1><span class="small muted" id="weekCaf">—</span></div>
+        <div class="chart" id="cafChart"></div>
+      </div>
+      <div class="card">
+        <h1>本月</h1>
+        <div class="kv-grid" id="monthStats"></div>
+      </div>
+      <div class="card">
+        <h1>近 30 天常喝的</h1>
+        <ul class="rank" id="rankList" style="margin-top:10px"></ul>
+      </div>
+    </section>
+
+    <!-- ============ 设置 ============ -->
+    <section id="view-settings" class="view hidden">
+      <div class="card">
+        <h1>我的目标</h1>
+        <div style="margin-top:8px">
+          <label class="row"><span>咖啡因上限</span><span class="field"><input type="number" inputmode="numeric" data-set="caffeineLimit">mg</span></label>
+          <label class="row"><span>每日水分目标</span><span class="field"><input type="number" inputmode="numeric" data-set="waterGoal">ml</span></label>
+          <label class="row"><span>蛋白质目标</span><span class="field"><input type="number" inputmode="decimal" data-set="proteinGoal">g</span></label>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h1>饮品库</h1><span class="small muted" id="recipeCount"></span></div>
+        <ul class="mgr" id="recipeList"></ul>
+        <button class="btn ghost" id="btnNewRecipe">+ 新建饮品</button>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h1>配料库</h1><span class="small muted">每 100ml 含量</span></div>
+        <ul class="mgr" id="ingList"></ul>
+        <button class="btn ghost" id="btnNewIng">+ 新建配料</button>
+      </div>
+
+      <div class="card">
+        <h1>数据</h1>
+        <div class="btnrow" style="margin-top:12px">
+          <button class="btn" id="btnExport">导出备份</button>
+          <button class="btn" id="btnImport">导入备份</button>
+        </div>
+        <button class="btn danger-text" id="btnReset" style="margin-top:10px">清空所有记录</button>
+        <p class="fine">数据只保存在这台设备的浏览器里，不上传任何服务器。换设备或清理浏览器数据前，请先导出备份。</p>
+      </div>
+
+      <div class="card">
+        <details>
+          <summary>使用说明与几个约定</summary>
+          <p>
+            <b>液体量填多少？</b>填杯里的实际液体量，不含冰。加了冰的 473ml 杯，液体通常只有 350–400ml。<br>
+            <b>冰量为什么不影响数值？</b>冰只占体积，不改变浓缩和奶的用量，所以只作为标签记录。<br>
+            <b>糖量怎么算？</b>「少糖」把配方里的糖浆按一半计，「无糖」按零计。<br>
+            <b>数值准吗？</b>配料库里的数值是参考估算，可以在上面改成你查到的官方数据，所有记录会自动重算。<br>
+            <b>官方咖啡因填了会怎样？</b>这杯的咖啡因就固定为你填的数，不再按配料推算，也不随毫升数变化。所以大小杯请分别建饮品，别在一个饮品里改毫升。<br>
+            <b>咖啡因怎么算？</b>就是「上限 − 今天每一杯」。默认 400mg，每记一杯就扣掉这杯的咖啡因，扣到 0 为止。记录面板里会直接告诉你「喝完这杯，今天还剩多少」。<br>
+            <b>想记一个库里没有的？</b>「记一杯」面板里点「＋ 新饮品」，填名字、毫升，再把「营养数值怎么填」切到「直接填每杯数值」，四项数字填一下就好，不用管配料。<br>
+            <b>价格每次都不一样？</b>保存前把「实付价格」改成这次真正付的钱（用了券就填券后价），统计都是按你填的实付算的。<br>
+            <b>怎么备份？</b>点「导出备份」会下载一个 JSON 文件，换设备时用「导入备份」还原。
+          </p>
+        </details>
+      </div>
+    </section>
+  </main>
+
+  <div class="fabbar"><div class="fabbar-inner"><button class="fab" id="fab" aria-label="记一杯">＋</button></div></div>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <button data-view="today" class="on">今日</button>
+      <button data-view="stats">统计</button>
+      <button data-view="settings">设置</button>
+    </div>
+  </nav>
+</div>
+
+<div id="sheetRoot" class="sheet-wrap hidden"></div>
+<div class="toast" id="toast"><span id="toastMsg"></span></div>
+
+<noscript><p style="padding:40px;text-align:center">需要开启 JavaScript 才能使用。</p></noscript>
+
+<script>
+'use strict';
+
+/* ============================================================
+   基础工具
+   ============================================================ */
+const $  = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
+const LS_KEY = 'drink-tracker:v1';
+const DEMO = /[?&]demo/.test(location.search);
+
+const pad = n => String(n).padStart(2, '0');
+const uid = () => Math.random().toString(36).slice(2, 8) + Date.now().toString(36).slice(-3);
+const num = (v, d = 0) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+const r1 = n => Math.round(n * 10) / 10;
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+  { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+));
+const money = n => String(Math.round(num(n) * 100) / 100);
+const byId = (arr, id) => (arr || []).find(x => x.id === id) || null;
+
+const dayKey = ts => { const d = new Date(ts); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const fmtTime = ts => { const d = new Date(ts); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const toLocalInput = ts => {
+  const d = new Date(ts);
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+const fromLocalInput = v => { const t = new Date(v).getTime(); return Number.isFinite(t) ? t : Date.now(); };
+
+/* ============================================================
+   初始数据：配料（每 100ml）与饮品配方
+   ============================================================ */
+const SEED = {
+  version: 1,
+  seedVersion: 3,
+  settings: { caffeineLimit: 400, waterGoal: 1500, proteinGoal: 70 },
+  ingredients: [
+    { id: 'esp',    name: '意式浓缩', caffeine: 210, water: 90,  protein: 0.1, sugar: 0,    kcal: 3 },
+    { id: 'pour',   name: '手冲咖啡', caffeine: 40,  water: 99,  protein: 0.1, sugar: 0,    kcal: 1 },
+    { id: 'milk',   name: '全脂牛奶', caffeine: 0,   water: 87,  protein: 3.3, sugar: 4.8,  kcal: 65 },
+    { id: 'oat',    name: '燕麦奶',   caffeine: 0,   water: 90,  protein: 1.0, sugar: 4.0,  kcal: 45 },
+    { id: 'soy',    name: '豆奶',     caffeine: 0,   water: 90,  protein: 3.2, sugar: 2.5,  kcal: 40 },
+    { id: 'coco',   name: '椰乳',     caffeine: 0,   water: 85,  protein: 1.0, sugar: 6.0,  kcal: 70 },
+    { id: 'foam',   name: '芝士奶盖', caffeine: 0,   water: 55,  protein: 4.5, sugar: 9,    kcal: 200 },
+    { id: 'syrup',  name: '糖浆',     caffeine: 0,   water: 30,  protein: 0,   sugar: 65,   kcal: 260, isSugar: true },
+    { id: 'water',  name: '白水',     caffeine: 0,   water: 100, protein: 0,   sugar: 0,    kcal: 0 },
+    { id: 'soda',   name: '苏打水',   caffeine: 0,   water: 99,  protein: 0,   sugar: 0,    kcal: 0 },
+    { id: 'cola',   name: '可乐',     caffeine: 10,  water: 89,  protein: 0,   sugar: 10.6, kcal: 43 },
+    { id: 'cola0',  name: '零度可乐', caffeine: 10,  water: 99,  protein: 0,   sugar: 0,    kcal: 0.4 },
+    { id: 'black',  name: '红茶汤',   caffeine: 20,  water: 99,  protein: 0,   sugar: 0,    kcal: 1 },
+    { id: 'green',  name: '绿茶汤',   caffeine: 12,  water: 99,  protein: 0,   sugar: 0,    kcal: 1 },
+    { id: 'oolong', name: '乌龙茶汤', caffeine: 15,  water: 99,  protein: 0,   sugar: 0,    kcal: 1 },
+    { id: 'oj',     name: '橙汁',     caffeine: 0,   water: 88,  protein: 0.7, sugar: 9,    kcal: 45 }
+  ],
+  recipes: [
+    /* —— 你提供的官方数据：咖啡因锁定为整杯固定值 —— */
+    { id: 'r-water',    name: '白水',           brand: '',        baseMl: 350, price: 0,  plain: true, components: [{ ing: 'water', ml: 350 }] },
+    { id: 'r-velvet',   name: '丝绒拿铁 大杯',   brand: '瑞幸',    baseMl: 400, price: 11.9, cafFixed: 150,  components: [{ ing: 'esp', ml: 60 }, { ing: 'milk', ml: 315 }, { ing: 'syrup', ml: 25 }] },
+    { id: 'r-manner-s', name: '咸芝士拿铁 355',  brand: 'Manner',  baseMl: 355, price: 20, cafFixed: 186,  components: [{ ing: 'esp', ml: 60 }, { ing: 'milk', ml: 235 }, { ing: 'foam', ml: 60 }] },
+    { id: 'r-manner-l', name: '咸芝士拿铁 473',  brand: 'Manner',  baseMl: 473, price: 25, cafFixed: 248,  components: [{ ing: 'esp', ml: 90 }, { ing: 'milk', ml: 313 }, { ing: 'foam', ml: 70 }] },
+    { id: 'r-suntory',  name: '无糖乌龙茶 500',  brand: '三得利',  baseMl: 500, price: 3.25, cafFixed: 100,  components: [{ ing: 'oolong', ml: 500 }] },
+    { id: 'r-bwcj',     name: '白雾红尘 大杯',   brand: '霸王茶姬', baseMl: 600, price: 17, cafFixed: 78.9, components: [{ ing: 'black', ml: 420 }, { ing: 'milk', ml: 150 }, { ing: 'syrup', ml: 30 }] },
+    /* —— 通用款：咖啡因按配料估算 —— */
+    { id: 'r-amer',     name: '美式',           brand: '',        baseMl: 350, price: 22, components: [{ ing: 'esp', ml: 60 }, { ing: 'water', ml: 290 }] },
+    { id: 'r-latte',    name: '拿铁',           brand: '',        baseMl: 350, price: 28, components: [{ ing: 'esp', ml: 60 }, { ing: 'milk', ml: 290 }] },
+    { id: 'r-coco',     name: '生椰拿铁',       brand: '瑞幸',    baseMl: 400, price: 29, components: [{ ing: 'esp', ml: 60 }, { ing: 'coco', ml: 190 }, { ing: 'milk', ml: 150 }] },
+    { id: 'r-oat',      name: '燕麦拿铁',       brand: '',        baseMl: 350, price: 30, components: [{ ing: 'esp', ml: 60 }, { ing: 'oat', ml: 290 }] },
+    { id: 'r-pour',     name: '手冲',           brand: '自制',    baseMl: 250, price: 0,  components: [{ ing: 'pour', ml: 250 }] },
+    { id: 'r-black',    name: '红茶',           brand: '',        baseMl: 350, price: 0,  components: [{ ing: 'black', ml: 350 }] },
+    { id: 'r-oolong',   name: '乌龙茶',         brand: '',        baseMl: 500, price: 5,  components: [{ ing: 'oolong', ml: 500 }] },
+    { id: 'r-cola',     name: '可乐',           brand: '',        baseMl: 330, price: 4,  components: [{ ing: 'cola', ml: 330 }] },
+    { id: 'r-oj',       name: '橙汁',           brand: '',        baseMl: 250, price: 8,  components: [{ ing: 'oj', ml: 250 }] }
+  ],
+  logs: []
+};
+
+const ICE_OPTIONS  = ['热', '常温', '少冰', '正常冰', '去冰'];
+const SUGAR_OPTIONS = [{ v: 'normal', t: '标准糖' }, { v: 'less', t: '半糖' }, { v: 'none', t: '无糖' }];
+const ML_PRESETS = [250, 350, 473, 591];
+
+/* ============================================================
+   状态
+   ============================================================ */
+let S = null;
+let lastDeleted = null;
+let toastTimer = null;
+
+function load() {
+  if (DEMO) return demoState();
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return structuredClone(SEED);
+    const d = JSON.parse(raw);
+    return normalize(d);
+  } catch (e) {
+    console.warn('读取数据失败，使用初始数据', e);
+    return structuredClone(SEED);
+  }
+}
+
+function normalize(d) {
+  const base = structuredClone(SEED);
+  const out = {
+    version: 1,
+    settings: Object.assign({}, base.settings, d.settings || {}),
+    ingredients: Array.isArray(d.ingredients) && d.ingredients.length ? d.ingredients : base.ingredients,
+    recipes: Array.isArray(d.recipes) && d.recipes.length ? d.recipes : base.recipes,
+    logs: Array.isArray(d.logs) ? d.logs : []
+  };
+  out.logs = out.logs.filter(l => l && l.recipeId && Number.isFinite(l.ts));
+
+  // 内置库升级：只补缺失的内置项，不覆盖用户改过的内容
+  const fromVersion = num(d.seedVersion, 1);
+  out.seedVersion = fromVersion;
+  if (fromVersion < SEED.seedVersion) {
+    const newIngs = SEED.ingredients.filter(i => !byId(out.ingredients, i.id));
+    const newRecs = SEED.recipes.filter(r => !byId(out.recipes, r.id));
+    out.ingredients = out.ingredients.concat(newIngs);
+    out.recipes = newRecs.concat(out.recipes);
+    out.seedVersion = SEED.seedVersion;
+  }
+  // v3：把内置饮品的价格校准成你的实际支付价（只改还是旧默认价的）
+  if (fromVersion < 3) {
+    const OLD_PRICE = { 'r-velvet': 19, 'r-manner-s': 25, 'r-manner-l': 28, 'r-suntory': 6, 'r-bwcj': 19 };
+    for (const id in OLD_PRICE) {
+      const cur = byId(out.recipes, id);
+      const fresh = byId(SEED.recipes, id);
+      if (cur && fresh && num(cur.price) === OLD_PRICE[id]) cur.price = fresh.price;
+    }
+  }
+  return out;
+}
+
+function save() {
+  if (DEMO) return;
+  try { localStorage.setItem(LS_KEY, JSON.stringify(S)); }
+  catch (e) { toast('保存失败：浏览器存储空间可能已满'); }
+}
+
+function demoState() {
+  const s = structuredClone(SEED);
+  const now = new Date();
+  const picks = ['r-velvet', 'r-manner-l', 'r-suntory', 'r-water', 'r-bwcj', 'r-manner-s', 'r-amer'];
+  for (let d = 6; d >= 0; d--) {
+    const n = 2 + ((d * 7) % 3);
+    for (let i = 0; i < n; i++) {
+      const rec = byId(s.recipes, picks[(d * 3 + i) % picks.length]);
+      let t = new Date(now);
+      t.setDate(now.getDate() - d);
+      t.setHours(8 + i * 3, (i * 17) % 60, 0, 0);
+      if (t.getTime() > now.getTime()) t = new Date(now.getTime() - (i + 1) * 3600e3);
+      s.logs.push({
+        id: uid(), ts: t.getTime(), recipeId: rec.id, ml: rec.baseMl,
+        ice: '少冰', sugar: i % 2 ? 'less' : 'normal', price: rec.price
+      });
+    }
+  }
+  return s;
+}
+
+/* ============================================================
+   计算
+   ============================================================ */
+function compute(recipe, ml, sugarMode) {
+  const out = { caffeine: 0, water: 0, protein: 0, sugar: 0, kcal: 0 };
+  if (!recipe) return out;
+  const base = recipe.baseMl > 0 ? recipe.baseMl : 1;
+  const scale = (ml > 0 ? ml : base) / base;
+
+  if (recipe.nutri) {
+    // 直接填数值的饮品：按杯换算
+    out.caffeine = num(recipe.nutri.caffeine) * scale;
+    out.water    = num(recipe.nutri.water)    * scale;
+    out.protein  = num(recipe.nutri.protein)  * scale;
+    out.sugar    = num(recipe.nutri.sugar)    * scale;
+    out.kcal     = num(recipe.nutri.kcal)     * scale;
+  } else if (Array.isArray(recipe.components)) {
+    for (const c of recipe.components) {
+      const ing = byId(S.ingredients, c.ing);
+      if (!ing) continue;
+      let k = scale;
+      if (ing.isSugar) {
+        if (sugarMode === 'none') continue;
+        if (sugarMode === 'less') k *= 0.5;
+      }
+      const m = num(c.ml) * k;
+      out.caffeine += num(ing.caffeine) * m / 100;
+      out.water    += num(ing.water)    * m / 100;
+      out.protein  += num(ing.protein)  * m / 100;
+      out.sugar    += num(ing.sugar)    * m / 100;
+      out.kcal     += num(ing.kcal)     * m / 100;
+    }
+  }
+  // 官方数据优先：配方里填了整杯咖啡因，就以它为准，不再按配料推算
+  if (num(recipe.cafFixed) > 0) out.caffeine = num(recipe.cafFixed);
+  return out;
+}
+
+const logNutrition = log => compute(byId(S.recipes, log.recipeId), num(log.ml), log.sugar || 'normal');
+
+function totalsOf(logs) {
+  const t = { caffeine: 0, water: 0, plain: 0, protein: 0, sugar: 0, kcal: 0, money: 0, cups: logs.length };
+  for (const l of logs) {
+    const n = logNutrition(l);
+    t.caffeine += n.caffeine; t.water += n.water; t.protein += n.protein;
+    t.sugar += n.sugar; t.kcal += n.kcal; t.money += num(l.price);
+    const r = byId(S.recipes, l.recipeId);
+    if (r && r.plain) t.plain += num(l.ml);
+  }
+  return t;
+}
+
+const logsOfDay = key => S.logs.filter(l => dayKey(l.ts) === key).sort((a, b) => b.ts - a.ts);
+
+/* 今天还能摄入多少咖啡因：上限减去今天已喝（可再减掉一杯预估） */
+function caffeineLeft(extra) {
+  const limit = Math.max(1, num(S.settings.caffeineLimit, 400));
+  const key = dayKey(Date.now());
+  let today = 0;
+  for (const l of S.logs) if (dayKey(l.ts) === key) today += logNutrition(l).caffeine;
+  return limit - today - num(extra);
+}
+
+function caffeineLeftText(v, html) {
+  const n = Math.round(v);
+  if (html) return n >= 0 ? `还剩 <b>${n}mg</b>` : `超出 <b>${-n}mg</b>`;
+  return n >= 0 ? `还剩 ${n}mg` : `超出 ${-n}mg`;
+}
+
+/* ============================================================
+   渲染：今日
+   ============================================================ */
+function renderHeader() {
+  const d = new Date();
+  const week = ['日', '一', '二', '三', '四', '五', '六'][d.getDay()];
+  $('#topDate').textContent = `${d.getMonth() + 1}月${d.getDate()}日 周${week}`;
+  const h = d.getHours();
+  const greet = h < 11 ? '今天喝了什么？' : h < 14 ? '午后一杯？' : h < 18 ? '下午好' : '今天总结一下';
+  const v = location.hash.replace('#', '');
+  $('#topHello').textContent = v === 'stats' ? '统计' : v === 'settings' ? '设置' : greet;
+}
+
+function renderToday() {
+  const key = dayKey(Date.now());
+  const logs = logsOfDay(key);
+  const t = totalsOf(logs);
+  const st = S.settings;
+
+  const limit = Math.max(1, num(st.caffeineLimit, 400));
+  const caf = t.caffeine;
+  const pct = Math.min(1, caf / limit);
+  $('#cafVal').textContent = Math.round(caf);
+  $('#cafRing').style.strokeDashoffset = String(263.9 * (1 - pct));
+  $('#cafPct').textContent = Math.round(pct * 100) + '%';
+  $('#cafCard').classList.toggle('over', caf > limit);
+  if (caf > limit) {
+    $('#cafHint').textContent = `已超出 ${Math.round(caf - limit)}mg · 上限 ${limit}mg`;
+  } else {
+    const left = Math.round(limit - caf);
+    $('#cafHint').textContent = caf === 0 ? `上限 ${limit}mg` : `还剩 ${left}mg · 上限 ${limit}mg`;
+  }
+
+  const wGoal = Math.max(1, num(st.waterGoal, 1500));
+  $('#waterVal').textContent = Math.round(t.water);
+  $('#waterBar').style.width = Math.min(100, (t.water / wGoal) * 100) + '%';
+  $('#waterHint').textContent = t.water >= wGoal
+    ? `已达标 · 其中纯水 ${Math.round(t.plain)}ml`
+    : `还差 ${Math.round(wGoal - t.water)}ml · 纯水 ${Math.round(t.plain)}ml`;
+  $('#waterCard').classList.toggle('over', false);
+
+  const week = lastN(7).map(d => totalsOf(logsOfDay(d.key)).money);
+  const weekMax = Math.max(1, ...week);
+  $('#moneySpark').innerHTML = week.map((v, i) =>
+    `<i class="${i === 6 ? 'today' : ''}" style="height:${v <= 0 ? 4 : Math.max(9, (v / weekMax) * 100)}%"></i>`).join('');
+
+  const mStart = new Date(); mStart.setDate(1); mStart.setHours(0, 0, 0, 0);
+  const monthTotal = S.logs.filter(l => l.ts >= mStart.getTime()).reduce((a, l) => a + num(l.price), 0);
+  $('#moneyVal').textContent = money(t.money);
+  $('#moneyHint').textContent = `本月累计 ¥${money(monthTotal)}`;
+
+  $('#proteinVal').textContent = r1(t.protein);
+  $('#sugarVal').textContent = r1(t.sugar);
+  $('#cupVal').textContent = t.cups;
+
+  const list = $('#logList');
+  if (!logs.length) {
+    list.innerHTML = '';
+    $('#logEmpty').classList.remove('hidden');
+  } else {
+    $('#logEmpty').classList.add('hidden');
+    list.innerHTML = logs.map(l => {
+      const r = byId(S.recipes, l.recipeId);
+      const n = logNutrition(l);
+      const tags = [l.ice, l.sugar === 'less' ? '半糖' : l.sugar === 'none' ? '无糖' : '']
+        .filter(Boolean).map(x => `<span class="tag">${esc(x)}</span>`).join('');
+      return `<li>
+        <div class="log-time">${fmtTime(l.ts)}</div>
+        <div class="log-main">
+          <div class="log-name">${esc(r ? r.name : '已删除的饮品')}</div>
+          <div class="log-meta">${Math.round(num(l.ml))}ml · 咖啡因 ${Math.round(n.caffeine)}mg · 水 ${Math.round(n.water)}ml</div>
+        </div>
+        <div class="log-price">¥${money(num(l.price))}</div>
+        <button class="del" data-del="${esc(l.id)}" aria-label="删除">✕</button>
+      </li>`;
+    }).join('');
+  }
+}
+
+/* ============================================================
+   渲染：统计
+   ============================================================ */
+function lastN(n) {
+  const out = [];
+  const now = new Date();
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+    out.push({
+      key: dayKey(d.getTime()),
+      d,
+      label: '周' + ['日', '一', '二', '三', '四', '五', '六'][d.getDay()],
+      isToday: i === 0
+    });
+  }
+  return out;
+}
+
+const fmtMD = d => `${d.getMonth() + 1}/${d.getDate()}`;
+
+/* 折线：纯 SVG，横向拉伸但线宽保持不变 */
+function lineChartHTML(vals, color, axisHTML) {
+  const n = vals.length;
+  const W = 300, H = 112, T = 12, B = 10, L = 3, R = 3;
+  const max = Math.max(1, ...vals);
+  const X = i => L + (W - L - R) * (n <= 1 ? 0 : i / (n - 1));
+  const Y = v => T + (H - T - B) * (1 - v / max);
+  let d = '';
+  for (let i = 0; i < n; i++) d += (i ? 'L' : 'M') + X(i).toFixed(1) + ' ' + Y(vals[i]).toFixed(1) + ' ';
+  const area = d + 'L' + X(n - 1).toFixed(1) + ' ' + (H - B) + ' L' + X(0).toFixed(1) + ' ' + (H - B) + ' Z';
+  return `<svg class="linechart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      <path d="${area}" fill="var(--${color})" opacity=".13"/>
+      <path d="${d}" fill="none" stroke="var(--${color})" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+      <circle cx="${X(n - 1).toFixed(1)}" cy="${Y(vals[n - 1]).toFixed(1)}" r="3.2" fill="var(--${color})"/>
+    </svg>
+    <div class="lineaxis">${axisHTML}</div>`;
+}
+
+function renderStats() {
+  const days = lastN(7);
+  const values = days.map(d => totalsOf(logsOfDay(d.key)));
+
+  /* 近 7 天消费 */
+  const m7 = values.map(v => v.money);
+  const sum7 = m7.reduce((a, b) => a + b, 0);
+  const active7 = m7.filter(v => v > 0).length || 1;
+  $('#weekMoney').textContent = sum7 > 0 ? `合计 ¥${money(sum7)} · 日均 ¥${money(sum7 / active7)}` : '暂无记录';
+  $('#moneyChart7').innerHTML = sum7 > 0
+    ? lineChartHTML(m7, 'money', days.map(d => `<span>${d.label}</span>`).join(''))
+    : '<div class="chart-empty">最近 7 天还没有消费记录</div>';
+
+  /* 近 30 天消费 */
+  const d30 = lastN(30);
+  const m30 = d30.map(d => totalsOf(logsOfDay(d.key)).money);
+  const sum30 = m30.reduce((a, b) => a + b, 0);
+  const active30 = m30.filter(v => v > 0).length || 1;
+  $('#monthMoney').textContent = sum30 > 0 ? `合计 ¥${money(sum30)} · 日均 ¥${money(sum30 / active30)}` : '暂无记录';
+  const axis30 = [0, 7, 14, 21, 29].map(i => `<span>${fmtMD(d30[i].d)}</span>`).join('');
+  $('#moneyChart30').innerHTML = sum30 > 0
+    ? lineChartHTML(m30, 'money', axis30)
+    : '<div class="chart-empty">最近 30 天还没有消费记录</div>';
+
+  /* 近 7 天咖啡因 */
+  const cafMax = Math.max(1, ...values.map(v => v.caffeine));
+  $('#cafChart').innerHTML = days.map((d, i) => {
+    const v = values[i].caffeine;
+    const h = v <= 0 ? 0 : Math.max(4, (v / cafMax) * 100);
+    return `<div class="bar-col ${d.isToday ? 'today' : ''}">
+      <div class="bar-val">${Math.round(v)}</div>
+      <div class="bar-track"><div class="bar-fill" style="height:${h}%"></div></div>
+      <div class="bar-lbl">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  const cafSum = values.reduce((a, v) => a + v.caffeine, 0);
+  const overDays = values.filter(v => v.caffeine > num(S.settings.caffeineLimit, 400)).length;
+  $('#weekCaf').textContent = `日均 ${Math.round(cafSum / 7)}mg · 超限 ${overDays} 天`;
+
+  /* 本月 */
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  const monthLogs = S.logs.filter(l => l.ts >= monthStart);
+  const mt = totalsOf(monthLogs);
+  const activeDays = new Set(monthLogs.map(l => dayKey(l.ts))).size || 1;
+
+  let bestDay = 0;
+  const perDay = {};
+  for (const l of monthLogs) {
+    const k = dayKey(l.ts);
+    perDay[k] = (perDay[k] || 0) + num(l.price);
+  }
+  for (const k in perDay) if (perDay[k] > bestDay) bestDay = perDay[k];
+
+  $('#monthStats').innerHTML = [
+    ['总花费', '¥' + money(mt.money), ''],
+    ['日均花费', '¥' + money(mt.money / activeDays), ''],
+    ['单日最高', '¥' + money(bestDay), ''],
+    ['记录杯数', mt.cups, '杯'],
+    ['日均咖啡因', Math.round(mt.caffeine / activeDays), 'mg'],
+    ['日均水分', Math.round(mt.water / activeDays), 'ml']
+  ].map(([k, v, u]) => `<div class="kv"><div class="k">${k}</div><div class="v">${v}${u ? `<small>${u}</small>` : ''}</div></div>`).join('');
+
+  const from = Date.now() - 30 * 864e5;
+  const recent = S.logs.filter(l => l.ts >= from);
+  const agg = {};
+  for (const l of recent) {
+    const a = agg[l.recipeId] || (agg[l.recipeId] = { n: 0, caf: 0, money: 0, ml: 0 });
+    const n = logNutrition(l);
+    a.n++; a.caf += n.caffeine; a.money += num(l.price); a.ml += num(l.ml);
+  }
+  const rows = Object.entries(agg).sort((a, b) => b[1].n - a[1].n).slice(0, 6);
+  $('#rankList').innerHTML = rows.length ? rows.map(([id, a], i) => {
+    const r = byId(S.recipes, id);
+    return `<li>
+      <div class="n"><span class="idx">${i + 1}</span><span class="r-name">${esc(r ? r.name : '已删除')}</span></div>
+      <div class="r-val">${a.n} 杯 · ¥${money(a.money)} · ${Math.round(a.caf)}mg</div>
+    </li>`;
+  }).join('') : '<li class="muted small" style="border:0">最近 30 天还没有记录</li>';
+}
+
+/* ============================================================
+   渲染：设置
+   ============================================================ */
+function renderSettings() {
+  $$('[data-set]').forEach(el => { el.value = S.settings[el.dataset.set]; });
+  $('#recipeCount').textContent = `${S.recipes.length} 种`;
+  $('#recipeList').innerHTML = S.recipes.map(r => {
+    const n = compute(r, r.baseMl, 'normal');
+    const parts = [`${r.baseMl}ml`];
+    if (num(r.cafFixed) > 0) parts.push(`咖啡因 ${r1(num(r.cafFixed))}mg · 官方`);
+    else if (n.caffeine >= 1) parts.push(`咖啡因 ${Math.round(n.caffeine)}mg`);
+    if (n.protein >= 0.5) parts.push(`蛋白 ${r1(n.protein)}g`);
+    parts.push(`¥${money(num(r.price))}`);
+    return `<li data-rid="${esc(r.id)}">
+      <div class="m-main">
+        <div class="m-name">${esc(r.name)}${r.brand ? `<span class="small muted"> · ${esc(r.brand)}</span>` : ''}</div>
+        <div class="m-sub">${parts.join(' · ')}</div>
+      </div>
+      <button class="m-edit" data-edit-recipe="${esc(r.id)}">编辑</button>
+    </li>`;
+  }).join('');
+
+  $('#ingList').innerHTML = S.ingredients.map(i => `<li data-iid="${esc(i.id)}">
+      <div class="m-main">
+        <div class="m-name">${esc(i.name)}${i.isSugar ? '<span class="small muted"> · 糖</span>' : ''}</div>
+        <div class="m-sub">咖啡因 ${i.caffeine} · 水 ${i.water} · 蛋白 ${i.protein} · 糖 ${i.sugar}</div>
+      </div>
+      <button class="m-edit" data-edit-ing="${esc(i.id)}">编辑</button>
+    </li>`).join('');
+}
+
+function renderAll() {
+  renderHeader();
+  renderToday();
+  renderStats();
+  renderSettings();
+}
+
+/* ============================================================
+   视图切换
+   ============================================================ */
+function showView(name) {
+  $$('.view').forEach(v => v.classList.add('hidden'));
+  const el = $('#view-' + name);
+  if (el) el.classList.remove('hidden');
+  $$('.nav-inner button').forEach(b => b.classList.toggle('on', b.dataset.view === name));
+  if (name === 'stats') renderStats();
+  if (name === 'settings') renderSettings();
+  document.querySelector('.fabbar').classList.toggle('hidden', name === 'settings');
+  if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  renderHeader();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+/* ============================================================
+   Sheet 基础
+   ============================================================ */
+const sheetRoot = $('#sheetRoot');
+let SHEET = null;
+
+function openSheet(html, ctx) {
+  SHEET = ctx || {};
+  sheetRoot.innerHTML = `<div class="backdrop" data-close></div><div class="sheet">${html}</div>`;
+  sheetRoot.classList.remove('hidden');
+  document.body.style.overflow = 'hidden';
+}
+function closeSheet() {
+  sheetRoot.classList.add('hidden');
+  sheetRoot.innerHTML = '';
+  SHEET = null;
+  document.body.style.overflow = '';
+}
+
+sheetRoot.addEventListener('click', e => {
+  if (e.target.closest('[data-close]')) { closeSheet(); return; }
+  const act = e.target.closest('[data-act]');
+  if (act) handleSheetAction(act.dataset.act, act, e);
+});
+
+/* ============================================================
+   记一杯
+   ============================================================ */
+function defaultRecipe() {
+  const counts = {};
+  for (const l of S.logs) counts[l.recipeId] = (counts[l.recipeId] || 0) + 1;
+  const best = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  if (best && byId(S.recipes, best[0])) return byId(S.recipes, best[0]);
+  return S.recipes.find(r => !r.plain) || S.recipes[0];
+}
+
+function openAdd(recipeId) {
+  const first = byId(S.recipes, recipeId) || defaultRecipe();
+  const st = { recipeId: first ? first.id : '', ml: first ? first.baseMl : 350, ice: '常温', sugar: 'normal', price: first ? num(first.price) : 0, ts: Date.now() };
+
+  openSheet(`
+    <div class="sheet-head"><h1>记一杯</h1><button class="icon-btn" data-close aria-label="关闭">✕</button></div>
+    <div class="sheet-body">
+      <div class="field-label">喝的是什么</div>
+      <div class="chips" id="pickDrink">
+        ${S.recipes.map(r => `<button class="chip ${r.id === st.recipeId ? 'on' : ''}" data-drink="${esc(r.id)}">${esc(r.name)}</button>`).join('')}
+        <button class="chip" data-drink="__new__">＋ 新饮品</button>
+      </div>
+
+      <div class="field-label">液体量 <span class="muted small">按杯里的液体算，不含冰</span></div>
+      <div class="mlrow">
+        <button class="step" data-act="ml-">−</button>
+        <input type="number" inputmode="numeric" id="mlInput" value="${st.ml}">
+        <button class="step" data-act="ml+">＋</button>
+      </div>
+      <div class="chips" style="margin-top:8px" id="mlPresets">
+        ${ML_PRESETS.map(v => `<button class="chip ${v === st.ml ? 'on' : ''}" data-ml="${v}">${v}</button>`).join('')}
+      </div>
+
+      <div class="field-label">冰</div>
+      <div class="chips" id="pickIce">
+        ${ICE_OPTIONS.map(v => `<button class="chip ${v === st.ice ? 'on' : ''}" data-ice="${v}">${v}</button>`).join('')}
+      </div>
+
+      <div class="field-label">糖 <span class="muted small">只影响配方里的糖浆</span></div>
+      <div class="chips" id="pickSugar">
+        ${SUGAR_OPTIONS.map(o => `<button class="chip ${o.v === st.sugar ? 'on' : ''}" data-sugar="${o.v}">${o.t}</button>`).join('')}
+      </div>
+
+      <div class="field-label">实付价格 <span class="muted small">按实际支付填，可以不是菜单价</span></div>
+      <div class="moneyrow"><span>¥</span><input type="number" inputmode="decimal" step="0.5" id="priceInput" value="${money(st.price)}" placeholder="0"></div>
+
+      <div class="field-label">时间</div>
+      <input class="input" type="datetime-local" id="timeInput" value="${toLocalInput(st.ts)}">
+
+      <div class="preview" id="addPreview"></div>
+    </div>
+    <div class="sheet-foot">
+      <button class="btn primary" data-act="savelog">保存</button>
+    </div>
+  `, { type: 'add', st });
+
+  const refresh = () => {
+    const r = byId(S.recipes, st.recipeId);
+    const n = compute(r, num(st.ml), st.sugar);
+    if (!r) { $('#addPreview').innerHTML = '还没有可选的饮品，点上面的「＋ 新饮品」建一个。'; return; }
+    let html = `预计 咖啡因 <b>${Math.round(n.caffeine)}mg</b> · 水 <b>${Math.round(n.water)}ml</b> · 蛋白 <b>${r1(n.protein)}g</b> · 糖 <b>${r1(n.sugar)}g</b>`;
+    if (n.caffeine > 0) {
+      html += `<br><span class="muted">喝完这杯，今天${caffeineLeftText(caffeineLeft(n.caffeine), true)}</span>`;
+    }
+    $('#addPreview').innerHTML = html;
+  };
+
+  sheetRoot.querySelector('#pickDrink').addEventListener('click', e => {
+    const b = e.target.closest('[data-drink]'); if (!b) return;
+    if (b.dataset.drink === '__new__') { openRecipeEditor(null, true); return; }
+    st.recipeId = b.dataset.drink;
+    const r = byId(S.recipes, st.recipeId);
+    st.ml = r ? r.baseMl : st.ml;
+    st.price = r ? num(r.price) : st.price;
+    $$('#pickDrink .chip').forEach(x => x.classList.toggle('on', x.dataset.drink === st.recipeId));
+    $$('#mlPresets .chip').forEach(x => x.classList.toggle('on', num(x.dataset.ml) === st.ml));
+    $('#mlInput').value = st.ml;
+    $('#priceInput').value = money(st.price);
+    refresh();
+  });
+
+  sheetRoot.querySelector('#pickIce').addEventListener('click', e => {
+    const b = e.target.closest('[data-ice]'); if (!b) return;
+    st.ice = b.dataset.ice;
+    $$('#pickIce .chip').forEach(x => x.classList.toggle('on', x.dataset.ice === st.ice));
+  });
+
+  sheetRoot.querySelector('#pickSugar').addEventListener('click', e => {
+    const b = e.target.closest('[data-sugar]'); if (!b) return;
+    st.sugar = b.dataset.sugar;
+    $$('#pickSugar .chip').forEach(x => x.classList.toggle('on', x.dataset.sugar === st.sugar));
+    refresh();
+  });
+
+  sheetRoot.querySelector('#mlPresets').addEventListener('click', e => {
+    const b = e.target.closest('[data-ml]'); if (!b) return;
+    st.ml = num(b.dataset.ml);
+    $('#mlInput').value = st.ml;
+    $$('#mlPresets .chip').forEach(x => x.classList.toggle('on', num(x.dataset.ml) === st.ml));
+    refresh();
+  });
+
+  $('#mlInput').addEventListener('input', e => {
+    st.ml = num(e.target.value);
+    $$('#mlPresets .chip').forEach(x => x.classList.toggle('on', num(x.dataset.ml) === st.ml));
+    refresh();
+  });
+
+  refresh();
+}
+
+function saveLog() {
+  const st = SHEET && SHEET.st;
+  if (!st) return;
+  if (!byId(S.recipes, st.recipeId)) { toast('请先选一个饮品'); return; }
+  const ts = fromLocalInput($('#timeInput').value);
+  const price = num($('#priceInput').value);
+  S.logs.push({
+    id: uid(), ts,
+    recipeId: st.recipeId,
+    ml: num(st.ml) > 0 ? num(st.ml) : 350,
+    ice: st.ice,
+    sugar: st.sugar,
+    price
+  });
+  save();
+  closeSheet();
+  renderAll();
+  const key = dayKey(ts);
+  if (key === dayKey(Date.now())) {
+    toast(`已记录 · 今天${caffeineLeftText(caffeineLeft(0))}`);
+  } else {
+    toast(`已记录到 ${key}`);
+  }
+}
+
+/* ============================================================
+   编辑饮品
+   ============================================================ */
+function compRow(c) {
+  return `<div class="comp">
+    <select data-comp-ing>
+      ${S.ingredients.map(i => `<option value="${esc(i.id)}" ${i.id === c.ing ? 'selected' : ''}>${esc(i.name)}</option>`).join('')}
+    </select>
+    <input type="number" inputmode="numeric" data-comp-ml value="${num(c.ml)}" placeholder="ml">
+    <button class="rm" data-act="delcomp" aria-label="删除配料">✕</button>
+  </div>`;
+}
+
+function openRecipeEditor(id, backToAdd) {
+  const r = id ? byId(S.recipes, id) : null;
+  const draft = r
+    ? {
+        id: r.id, name: r.name, brand: r.brand || '', baseMl: r.baseMl,
+        price: num(r.price), cafFixed: num(r.cafFixed), plain: !!r.plain,
+        components: (r.components || []).map(c => ({ ...c })),
+        nutri: r.nutri ? { ...r.nutri } : null,
+        mode: r.nutri ? 'val' : 'ing'
+      }
+    : {
+        id: '', name: '', brand: '', baseMl: 350, price: 0, cafFixed: 0, plain: false,
+        components: [{ ing: (S.ingredients[0] || {}).id, ml: 350 }],
+        nutri: null, mode: 'ing'
+      };
+  const nut = draft.nutri || { caffeine: 0, water: 0, protein: 0, sugar: 0 };
+
+  openSheet(`
+    <div class="sheet-head"><h1>${r ? '编辑饮品' : '新建饮品'}</h1><button class="icon-btn" data-close>✕</button></div>
+    <div class="sheet-body">
+      <div class="field-label">名称</div>
+      <input class="input" id="rName" value="${esc(draft.name)}" placeholder="例如 霸王茶姬 伯牙绝弦">
+      <div class="field-label">品牌 / 来源 <span class="muted small">可留空</span></div>
+      <input class="input" id="rBrand" value="${esc(draft.brand)}" placeholder="例如 瑞幸、公司咖啡机">
+      <div class="num-grid" style="margin-top:16px">
+        <div><div class="field-label" style="margin-top:0">这一杯多少 ml</div><input class="input" type="number" inputmode="numeric" id="rMl" value="${draft.baseMl}"></div>
+        <div><div class="field-label" style="margin-top:0">参考单价 ¥</div><input class="input" type="number" inputmode="decimal" step="0.5" id="rPrice" value="${money(draft.price)}"></div>
+      </div>
+
+      <div class="field-label">营养数值怎么填</div>
+      <div class="chips" id="rMode">
+        <button class="chip ${draft.mode === 'ing' ? 'on' : ''}" data-mode="ing">按配料组成</button>
+        <button class="chip ${draft.mode === 'val' ? 'on' : ''}" data-mode="val">直接填每杯数值</button>
+      </div>
+
+      <div id="secIng" class="${draft.mode === 'ing' ? '' : 'hidden'}">
+        <div class="field-label">配料用量 <span class="muted small">加起来应约等于上面的 ml</span></div>
+        <div id="rComps">${draft.components.map(compRow).join('')}</div>
+        <button class="btn ghost" data-act="addcomp">+ 加一种配料</button>
+        <div class="field-label">官方咖啡因 <span class="muted small">选填；填了以它为准，整杯固定，不随毫升变</span></div>
+        <div class="moneyrow"><input type="number" inputmode="decimal" step="0.1" id="rCaf" value="${draft.cafFixed ? draft.cafFixed : ''}" placeholder="留空则按配料估算"><span>mg/杯</span></div>
+      </div>
+
+      <div id="secVal" class="${draft.mode === 'val' ? '' : 'hidden'}">
+        <div class="field-label">这一杯实际含量 <span class="muted small">不知道的填 0</span></div>
+        <div class="num-grid">
+          <div><div class="field-label" style="margin-top:0">咖啡因 mg</div><input class="input" type="number" inputmode="decimal" id="vCaf" value="${num(nut.caffeine)}"></div>
+          <div><div class="field-label" style="margin-top:0">水 ml</div><input class="input" type="number" inputmode="decimal" id="vWater" value="${num(nut.water)}"></div>
+          <div><div class="field-label" style="margin-top:0">蛋白质 g</div><input class="input" type="number" inputmode="decimal" step="0.1" id="vProtein" value="${num(nut.protein)}"></div>
+          <div><div class="field-label" style="margin-top:0">糖 g</div><input class="input" type="number" inputmode="decimal" step="0.1" id="vSugar" value="${num(nut.sugar)}"></div>
+        </div>
+      </div>
+
+      <label class="check"><input type="checkbox" id="rPlain" ${draft.plain ? 'checked' : ''}> 这是白水，计入「纯饮水」</label>
+      <div class="warn hidden" id="rWarn"></div>
+    </div>
+    <div class="sheet-foot">
+      ${r ? '<button class="btn" data-act="delrecipe" style="color:var(--danger)">删除</button>' : ''}
+      <button class="btn primary" data-act="saverecipe">保存</button>
+    </div>
+  `, { type: 'recipe', id: r ? r.id : '', mode: draft.mode, backToAdd: !!backToAdd });
+
+  $$('#rMode .chip').forEach(b => b.addEventListener('click', () => {
+    SHEET.mode = b.dataset.mode;
+    $$('#rMode .chip').forEach(x => x.classList.toggle('on', x.dataset.mode === SHEET.mode));
+    $('#secIng').classList.toggle('hidden', SHEET.mode !== 'ing');
+    $('#secVal').classList.toggle('hidden', SHEET.mode !== 'val');
+  }));
+}
+
+function collectComponents() {
+  return $$('#rComps .comp').map(row => ({
+    ing: row.querySelector('[data-comp-ing]').value,
+    ml: num(row.querySelector('[data-comp-ml]').value)
+  })).filter(c => c.ml > 0);
+}
+
+function saveRecipe() {
+  const name = $('#rName').value.trim();
+  const warn = msg => { $('#rWarn').textContent = msg; $('#rWarn').classList.remove('hidden'); };
+  if (!name) { warn('请填一个名称'); return; }
+
+  const mode = (SHEET && SHEET.mode) || 'ing';
+  const patch = {
+    name,
+    brand: $('#rBrand').value.trim(),
+    baseMl: num($('#rMl').value) || 350,
+    price: num($('#rPrice').value),
+    plain: $('#rPlain').checked
+  };
+
+  if (mode === 'val') {
+    patch.nutri = {
+      caffeine: num($('#vCaf').value),
+      water: num($('#vWater').value),
+      protein: num($('#vProtein').value),
+      sugar: num($('#vSugar').value),
+      kcal: 0
+    };
+    patch.components = [];
+    patch.cafFixed = 0;
+  } else {
+    const components = collectComponents();
+    if (!components.length) { warn('至少要有一个配料，并且用量要大于 0'); return; }
+    patch.components = components;
+    patch.cafFixed = num($('#rCaf').value);
+    patch.nutri = null;
+  }
+
+  let savedId = SHEET.id;
+  if (SHEET.id) {
+    const r = byId(S.recipes, SHEET.id);
+    if (r) Object.assign(r, patch);
+  } else {
+    savedId = uid();
+    S.recipes.push(Object.assign({ id: savedId }, patch));
+  }
+  const isNew = !SHEET.id;
+  const back = SHEET.backToAdd && isNew;
+  save(); closeSheet(); renderAll();
+  toast(isNew ? '已存入饮品库，下次直接选' : '已保存');
+  if (back) openAdd(savedId);
+}
+
+function deleteRecipe(id) {
+  const used = S.logs.filter(l => l.recipeId === id).length;
+  if (used) { toast(`这个饮品还有 ${used} 条记录，先留着吧`); return; }
+  if (!confirm('删除这个饮品？')) return;
+  S.recipes = S.recipes.filter(r => r.id !== id);
+  save(); closeSheet(); renderAll();
+  toast('已删除');
+}
+
+/* ============================================================
+   编辑配料
+   ============================================================ */
+function openIngEditor(id) {
+  const i = id ? byId(S.ingredients, id) : null;
+  const d = i
+    ? { ...i }
+    : { id: '', name: '', caffeine: 0, water: 90, protein: 0, sugar: 0, kcal: 0, isSugar: false };
+
+  const field = (key, label, step, unit) => `
+    <div><div class="field-label" style="margin-top:0">${label}</div>
+    <div class="moneyrow"><input type="number" inputmode="decimal" step="${step}" data-ing="${key}" value="${d[key]}"><span>${unit}</span></div></div>`;
+
+  openSheet(`
+    <div class="sheet-head"><h1>${i ? '编辑配料' : '新建配料'}</h1><button class="icon-btn" data-close>✕</button></div>
+    <div class="sheet-body">
+      <div class="field-label">名称</div>
+      <input class="input" id="iName" value="${esc(d.name)}" placeholder="例如 厚乳">
+      <div class="field-label">每 100ml 的含量</div>
+      <div class="num-grid">
+        ${field('caffeine', '咖啡因', 1, 'mg')}
+        ${field('water', '水分', 1, 'ml')}
+        ${field('protein', '蛋白质', 0.1, 'g')}
+        ${field('sugar', '糖', 0.1, 'g')}
+        ${field('kcal', '热量', 1, 'kcal')}
+        <div></div>
+      </div>
+      <label class="check"><input type="checkbox" id="iSugar" ${d.isSugar ? 'checked' : ''}> 这是糖浆（受「半糖 / 无糖」影响）</label>
+      <div class="warn hidden" id="iWarn"></div>
+    </div>
+    <div class="sheet-foot">
+      ${i ? '<button class="btn" data-act="deling" style="color:var(--danger)">删除</button>' : ''}
+      <button class="btn primary" data-act="saveing">保存</button>
+    </div>
+  `, { type: 'ing', id: i ? i.id : '' });
+}
+
+function saveIng() {
+  const name = $('#iName').value.trim();
+  if (!name) { $('#iWarn').textContent = '请填一个名称'; $('#iWarn').classList.remove('hidden'); return; }
+  const patch = { name, isSugar: $('#iSugar').checked };
+  $$('[data-ing]').forEach(el => { patch[el.dataset.ing] = num(el.value); });
+  if (SHEET.id) {
+    const i = byId(S.ingredients, SHEET.id);
+    if (i) Object.assign(i, patch);
+  } else {
+    S.ingredients.push(Object.assign({ id: uid() }, patch));
+  }
+  save(); closeSheet(); renderAll();
+  toast('已保存');
+}
+
+function deleteIng(id) {
+  const used = S.recipes.filter(r => (r.components || []).some(c => c.ing === id)).length;
+  if (used) { toast(`还有 ${used} 个饮品在用它，先留着吧`); return; }
+  if (!confirm('删除这个配料？')) return;
+  S.ingredients = S.ingredients.filter(x => x.id !== id);
+  save(); closeSheet(); renderAll();
+  toast('已删除');
+}
+
+/* ============================================================
+   Sheet 动作分发
+   ============================================================ */
+function handleSheetAction(act, el) {
+  switch (act) {
+    case 'ml+': {
+      const inp = $('#mlInput');
+      inp.value = num(inp.value) + 10;
+      inp.dispatchEvent(new Event('input'));
+      break;
+    }
+    case 'ml-': {
+      const inp = $('#mlInput');
+      inp.value = Math.max(0, num(inp.value) - 10);
+      inp.dispatchEvent(new Event('input'));
+      break;
+    }
+    case 'savelog': saveLog(); break;
+    case 'addcomp': {
+      const wrap = $('#rComps');
+      if (wrap) wrap.insertAdjacentHTML('beforeend', compRow({ ing: (S.ingredients[0] || {}).id, ml: 100 }));
+      break;
+    }
+    case 'delcomp': {
+      const row = el.closest('.comp');
+      if (row) row.remove();
+      break;
+    }
+    case 'saverecipe': saveRecipe(); break;
+    case 'delrecipe': deleteRecipe(SHEET.id); break;
+    case 'saveing': saveIng(); break;
+    case 'deling': deleteIng(SHEET.id); break;
+  }
+}
+
+/* ============================================================
+   删除与撤销
+   ============================================================ */
+function deleteLog(id) {
+  const idx = S.logs.findIndex(l => l.id === id);
+  if (idx < 0) return;
+  lastDeleted = { log: S.logs[idx], idx };
+  S.logs.splice(idx, 1);
+  save(); renderAll();
+  toast('已删除', () => {
+    if (!lastDeleted) return;
+    S.logs.splice(lastDeleted.idx, 0, lastDeleted.log);
+    lastDeleted = null;
+    save(); renderAll();
+    toast('已撤销');
+  });
+}
+
+/* ============================================================
+   Toast
+   ============================================================ */
+function toast(msg, undoFn) {
+  const el = $('#toast');
+  const span = $('#toastMsg');
+  el.innerHTML = `<span id="toastMsg">${esc(msg)}</span>${undoFn ? '<button id="toastUndo">撤销</button>' : ''}`;
+  el.classList.add('show');
+  if (undoFn) {
+    $('#toastUndo').addEventListener('click', () => {
+      el.classList.remove('show');
+      undoFn();
+    }, { once: true });
+  }
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('show'), undoFn ? 5000 : 2200);
+}
+
+/* ============================================================
+   导出 / 导入 / 重置
+   ============================================================ */
+function exportData() {
+  const d = new Date();
+  const stamp = `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+  const blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `饮料记录-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 3000);
+  toast('已导出备份文件');
+}
+
+function importData(file) {
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const d = JSON.parse(String(reader.result));
+      if (!d || !Array.isArray(d.logs)) throw new Error('格式不对');
+      if (!confirm('导入会覆盖当前所有数据，继续吗？')) return;
+      S = normalize(d);
+      save(); renderAll();
+      toast('导入成功');
+    } catch (e) {
+      toast('导入失败：不是有效的备份文件');
+    }
+  };
+  reader.readAsText(file);
+}
+
+/* ============================================================
+   事件绑定
+   ============================================================ */
+$$('.nav-inner button').forEach(b => b.addEventListener('click', () => showView(b.dataset.view)));
+$('#btnSettingsTop').addEventListener('click', () => showView('settings'));
+$('#fab').addEventListener('click', () => openAdd());
+$('#btnAddInline').addEventListener('click', () => openAdd());
+
+$('#logList').addEventListener('click', e => {
+  const b = e.target.closest('[data-del]');
+  if (b) deleteLog(b.dataset.del);
+});
+
+$('#btnNewRecipe').addEventListener('click', () => openRecipeEditor(null));
+$('#btnNewIng').addEventListener('click', () => openIngEditor(null));
+
+$('#recipeList').addEventListener('click', e => {
+  const b = e.target.closest('[data-edit-recipe]');
+  if (b) openRecipeEditor(b.dataset.editRecipe);
+});
+$('#ingList').addEventListener('click', e => {
+  const b = e.target.closest('[data-edit-ing]');
+  if (b) openIngEditor(b.dataset.editIng);
+});
+
+$$('[data-set]').forEach(el => {
+  el.addEventListener('change', () => {
+    const k = el.dataset.set;
+    S.settings[k] = el.type === 'time' ? el.value : num(el.value, S.settings[k]);
+    save(); renderToday(); renderStats();
+  });
+});
+
+$('#btnExport').addEventListener('click', exportData);
+$('#btnImport').addEventListener('click', () => {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = '.json,application/json';
+  inp.addEventListener('change', () => { if (inp.files && inp.files[0]) importData(inp.files[0]); });
+  inp.click();
+});
+$('#btnReset').addEventListener('click', () => {
+  if (!confirm('清空所有记录？饮品库和目标会保留，但记录无法恢复。建议先导出备份。')) return;
+  S.logs = [];
+  save(); renderAll();
+  toast('记录已清空');
+});
+
+/* ============================================================
+   启动
+   ============================================================ */
+S = load();
+if (DEMO) $('#demoBanner').classList.remove('hidden');
+renderAll();
+const startView = location.hash.replace('#', '');
+if (['stats', 'settings'].includes(startView)) showView(startView);
+
+/* 装到桌面 + 离线可用（只有通过 http/https 打开时才生效，本地双击 file:// 会跳过） */
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol || '')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+if (navigator.storage && navigator.storage.persist) {
+  try { navigator.storage.persist().catch(() => {}); } catch (e) {}
+}
+</script>
+</body>
+</html>
