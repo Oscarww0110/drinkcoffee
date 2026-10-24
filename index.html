@@ -265,18 +265,25 @@ details p{font-size:13px;color:var(--muted);line-height:1.75;margin-top:10px}
     <!-- ============ 统计 ============ -->
     <section id="view-stats" class="view hidden">
       <div class="card">
-        <div class="card-head"><h1>近 7 天消费</h1><span class="small muted" id="weekMoney">—</span></div>
-        <div id="moneyChart7"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><h1>近 30 天消费</h1><span class="small muted" id="monthMoney">—</span></div>
-        <div id="moneyChart30"></div>
-      </div>
-      <div class="card">
         <div class="card-head"><h1>近 7 天咖啡因</h1><span class="small muted" id="weekCaf">—</span></div>
         <div class="chart" id="cafChart"></div>
       </div>
       <div class="card">
+        <div class="card-head"><h1>近 7 天热量</h1><span class="small muted" id="weekKcal">—</span></div>
+        <div id="kcalChart7"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h1>近 7 天消费</h1><span class="small muted" id="weekMoney">—</span></div>
+        <div id="moneyChart7"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h1>近 30 天热量</h1><span class="small muted" id="monthKcal">—</span></div>
+        <div id="kcalChart30"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><h1>近 30 天消费</h1><span class="small muted" id="monthMoney">—</span></div>
+        <div id="moneyChart30"></div>
+      </div>      <div class="card">
         <h1>本月</h1>
         <div class="kv-grid" id="monthStats"></div>
       </div>
@@ -673,28 +680,12 @@ function lineChartHTML(vals, color, axisHTML) {
 function renderStats() {
   const days = lastN(7);
   const values = days.map(d => totalsOf(logsOfDay(d.key)));
-
-  /* 近 7 天消费 */
-  const m7 = values.map(v => v.money);
-  const sum7 = m7.reduce((a, b) => a + b, 0);
-  const active7 = m7.filter(v => v > 0).length || 1;
-  $('#weekMoney').textContent = sum7 > 0 ? `合计 ¥${money(sum7)} · 日均 ¥${money(sum7 / active7)}` : '暂无记录';
-  $('#moneyChart7').innerHTML = sum7 > 0
-    ? lineChartHTML(m7, 'money', days.map(d => `<span>${d.label}</span>`).join(''))
-    : '<div class="chart-empty">最近 7 天还没有消费记录</div>';
-
-  /* 近 30 天消费 */
   const d30 = lastN(30);
-  const m30 = d30.map(d => totalsOf(logsOfDay(d.key)).money);
-  const sum30 = m30.reduce((a, b) => a + b, 0);
-  const active30 = m30.filter(v => v > 0).length || 1;
-  $('#monthMoney').textContent = sum30 > 0 ? `合计 ¥${money(sum30)} · 日均 ¥${money(sum30 / active30)}` : '暂无记录';
+  const v30 = d30.map(d => totalsOf(logsOfDay(d.key)));
+  const axis7 = days.map(d => `<span>${d.label}</span>`).join('');
   const axis30 = [0, 7, 14, 21, 29].map(i => `<span>${fmtMD(d30[i].d)}</span>`).join('');
-  $('#moneyChart30').innerHTML = sum30 > 0
-    ? lineChartHTML(m30, 'money', axis30)
-    : '<div class="chart-empty">最近 30 天还没有消费记录</div>';
 
-  /* 近 7 天咖啡因 */
+  /* 近 7 天咖啡因（柱状） */
   const cafMax = Math.max(1, ...values.map(v => v.caffeine));
   $('#cafChart').innerHTML = days.map((d, i) => {
     const v = values[i].caffeine;
@@ -705,11 +696,26 @@ function renderStats() {
       <div class="bar-lbl">${d.label}</div>
     </div>`;
   }).join('');
-
   const cafSum = values.reduce((a, v) => a + v.caffeine, 0);
   const overDays = values.filter(v => v.caffeine > num(S.settings.caffeineLimit, 400)).length;
   $('#weekCaf').textContent = `日均 ${Math.round(cafSum / 7)}mg · 超限 ${overDays} 天`;
 
+  /* 折线卡片 */
+  const drawLine = (chartSel, labelSel, vals, color, axis, emptyText, fmt) => {
+    const sum = vals.reduce((a, b) => a + b, 0);
+    const active = vals.filter(v => v > 0).length || 1;
+    $(labelSel).textContent = sum > 0 ? `合计 ${fmt(sum)} · 日均 ${fmt(sum / active)}` : '暂无记录';
+    $(chartSel).innerHTML = sum > 0
+      ? lineChartHTML(vals, color, axis)
+      : `<div class="chart-empty">${emptyText}</div>`;
+  };
+  const kcalFmt = v => Math.round(v) + 'kcal';
+  const moneyFmt = v => '¥' + money(v);
+
+  drawLine('#kcalChart7', '#weekKcal', values.map(v => v.kcal), 'cafe', axis7, '最近 7 天还没有记录', kcalFmt);
+  drawLine('#moneyChart7', '#weekMoney', values.map(v => v.money), 'money', axis7, '最近 7 天还没有消费记录', moneyFmt);
+  drawLine('#kcalChart30', '#monthKcal', v30.map(v => v.kcal), 'cafe', axis30, '最近 30 天还没有记录', kcalFmt);
+  drawLine('#moneyChart30', '#monthMoney', v30.map(v => v.money), 'money', axis30, '最近 30 天还没有消费记录', moneyFmt);
   /* 本月 */
   const now = new Date();
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();

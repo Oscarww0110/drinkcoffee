@@ -1,6 +1,6 @@
 /* 离线缓存：装到桌面后，没网也能打开。
    注意：改了 index.html 之后，把下面的版本号 +1，手机重新打开才会拿到新版。 */
-const CACHE = 'heshenme-v6';
+const CACHE = 'heshenme-v7';
 const ASSETS = [
   './',
   'index.html',
