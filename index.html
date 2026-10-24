@@ -98,6 +98,12 @@ ul{list-style:none}
 .log-time{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;flex:none;width:42px}
 .log-main{flex:1;min-width:0}
 .log-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chips.compact .chip{padding:9px 11px;font-size:13.5px}
+.kcal5{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.kcal5 label{display:flex;flex-direction:column;gap:4px;min-width:0}
+.kcal5 label span{font-size:10px;color:var(--muted);text-align:center;white-space:nowrap}
+.kcal5 .input{height:40px;padding:0 4px;text-align:center;font-size:14px}
+.tag{display:inline-block;font-size:11px;font-weight:500;color:var(--muted);background:var(--bg);border-radius:6px;padding:1px 6px;margin-left:6px;vertical-align:2px}
 .log-meta{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .log-price{font-size:14px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--muted);flex:none}
 .del{width:30px;height:30px;border-radius:50%;color:var(--muted);display:grid;place-items:center;font-size:15px;flex:none}
@@ -326,8 +332,8 @@ details p{font-size:13px;color:var(--muted);line-height:1.75;margin-top:10px}
             <b>一杯 = 一个固定杯型。</b>中杯和大杯是两条独立的饮品，各自带 ml、咖啡因、热量。记录时不用再填毫升。<br>
             <b>咖啡因怎么算？</b>「上限 − 今天每一杯」。默认 400mg，每记一杯扣掉这杯的咖啡因，扣到 0 为止。记录面板里会直接告诉你「喝完这杯，今天还剩多少」。<br>
             <b>便利店买的那种</b>（比如瓶装乌龙茶）冰度和糖度改不了，所以不出现这两个选项。<br>
-            <b>热量是哪来的？</b>瑞幸丝绒拿铁是 352kcal（大杯／少冰／全糖，从瑞幸 App 查的）；Manner 咸芝士拿铁 355ml 是 240kcal；霸王茶姬白雾红尘大杯 296kcal。查不到官方的按同类估算，可以在饮品库里直接改。<br>
-            <b>糖度会影响热量吗？</b>不会。热量按这杯的固定值记，半糖／无糖只当备注。<br>
+            <b>热量是哪来的？</b>瑞幸丝绒拿铁按冰杯估：全糖 410kcal、不另外加糖 300kcal；Manner 咸芝士拿铁 355ml 是 240kcal；霸王茶姬白雾红尘大杯 296kcal。查不到官方的按同类估算，可以在饮品库里直接改。<br>
+            <b>糖度怎么影响热量？</b>每款饮品可以存五个糖度（无糖／微糖／半糖／少糖／全糖）各自的热量；只填两端时，中间按比例自动补。两个数一样（比如 Manner 那两杯）就不显示糖度选项。<br>
             <b>价格每次都不一样？</b>保存前把「实付价格」改成这次真正付的钱（用了券就填券后价），统计都按实付算。<br>
             <b>想记一个库里没有的？</b>「记一杯」里点「＋ 新饮品」，填名字、杯型 ml、咖啡因、热量就行。<br>
             <b>怎么备份？</b>点「导出备份」会下载一个 JSON 文件，换设备时用「导入备份」还原。
@@ -387,21 +393,27 @@ const fromLocalInput = v => { const t = new Date(v).getTime(); return Number.isF
    ============================================================ */
 const SEED = {
   version: 1,
-  seedVersion: 6,
+  seedVersion: 10,
   settings: { caffeineLimit: 400, waterGoal: 1500 },
   recipes: [
-    { id: 'r-water',    name: '白水',           brand: '',        ml: 350, caffeine: 0,    kcal: 0,   price: 0,    adjustable: false, plain: true },
-    { id: 'r-velvet',   name: '丝绒拿铁 大杯',   brand: '瑞幸',    ml: 473, caffeine: 150,  kcal: 352, price: 11.9, adjustable: true },
-    { id: 'r-manner-s', name: '咸芝士拿铁 中杯', brand: 'Manner',  ml: 355, caffeine: 186,  kcal: 240, price: 20,   adjustable: true },
-    { id: 'r-manner-l', name: '咸芝士拿铁 大杯', brand: 'Manner',  ml: 473, caffeine: 248,  kcal: 320, price: 25,   adjustable: true },
-    { id: 'r-suntory',  name: '无糖乌龙茶',      brand: '三得利',  ml: 500, caffeine: 100,  kcal: 0,   price: 3.25, adjustable: false },
-    { id: 'r-bwcj',     name: '白雾红尘 大杯',   brand: '霸王茶姬', ml: 600, caffeine: 78.9, kcal: 296, price: 17,   adjustable: true }
+    { id: 'r-water',    name: '白水',           brand: '',        ml: 350, caffeine: 0,    kcal: 0,   kcalNone: 0,   price: 0,    adjustable: false, plain: true },
+    { id: 'r-velvet',   name: '丝绒拿铁 大杯',   brand: '瑞幸',    ml: 473, caffeine: 150,  kcal: 410, kcalNone: 300, price: 11.9, adjustable: true },
+    { id: 'r-manner-s', name: '咸芝士拿铁 中杯', brand: 'Manner',  ml: 355, caffeine: 186,  kcal: 240, kcalNone: 240, price: 20,   adjustable: true },
+    { id: 'r-manner-l', name: '咸芝士拿铁 大杯', brand: 'Manner',  ml: 473, caffeine: 248,  kcal: 320, kcalNone: 320, price: 25,   adjustable: true },
+    { id: 'r-suntory',  name: '无糖乌龙茶',      brand: '三得利',  ml: 500, caffeine: 100,  kcal: 0,   kcalNone: 0,   price: 3.25, adjustable: false },
+    { id: 'r-bwcj',     name: '白雾红尘 大杯',   brand: '霸王茶姬', ml: 600, caffeine: 78.9, kcal: 288, kcalNone: 197, k5: [197, 258, 272, 276, 288], price: 17, adjustable: true }
   ],
   logs: []
 };
 
 const ICE_OPTIONS   = ['热', '常温', '少冰', '正常冰', '去冰'];
-const SUGAR_OPTIONS = [{ v: 'normal', t: '标准糖' }, { v: 'less', t: '半糖' }, { v: 'none', t: '无糖' }];
+const SUGAR_LEVELS = [
+  { v: 0,   t: '无糖' },
+  { v: 0.3, t: '微糖' },
+  { v: 0.5, t: '半糖' },
+  { v: 0.7, t: '少糖' },
+  { v: 1,   t: '全糖' }
+];
 
 /* ============================================================
    状态
@@ -488,6 +500,36 @@ function normalize(d) {
     if (v && num(v.kcal) === 376) v.kcal = 352;
     out.seedVersion = SEED.seedVersion;
   }
+
+  // v10：白雾红尘大杯（冷）换成官方五档实测值
+  if (fromVersion < 10) {
+    const b = byId(out.recipes, 'r-bwcj');
+    if (b && num(b.kcal) === 296) {
+      b.k5 = [197, 258, 272, 276, 288];
+      b.kcal = 288;
+      b.kcalNone = 197;
+    }
+    out.seedVersion = SEED.seedVersion;
+  }
+  // v9：丝绒拿铁换成冰杯的两点估值（全糖 410 / 不另外加糖 300）
+  if (fromVersion < 9) {
+    const v = byId(out.recipes, 'r-velvet');
+    if (v && num(v.kcal) === 352 && num(v.kcalNone) === 232) { v.kcal = 410; v.kcalNone = 300; }
+    out.seedVersion = SEED.seedVersion;
+  }
+  // v8：改成「全糖 / 无糖」两个锚点，中间档位按比例算
+  if (fromVersion < 8) {
+    for (const r of out.recipes) {
+      const fresh = byId(SEED.recipes, r.id);
+      if (r.kcalNone === undefined) {
+        r.kcalNone = (fresh && fresh.kcalNone !== undefined)
+          ? fresh.kcalNone
+          : Math.max(0, num(r.kcal) - num(r.sugarKcal));
+      }
+      delete r.sugarKcal;
+    }
+    out.seedVersion = SEED.seedVersion;
+  }
   // 清掉已经不需要的设置项
   delete out.settings.proteinGoal;
   delete out.settings.dailyBudget;
@@ -525,10 +567,62 @@ function demoState() {
 /* ============================================================
    计算
    ============================================================ */
+/* 糖度系数：兼容老数据的字符串，新数据直接存 0 / 0.3 / 0.5 / 0.7 / 1 */
+function sugarFraction(s) {
+  if (typeof s === 'number' && isFinite(s)) return Math.max(0, Math.min(1, s));
+  if (s === 'none') return 0;
+  if (s === 'less') return 0.5;
+  return 1;
+}
+
+function sugarLabel(s) {
+  const f = sugarFraction(s);
+  if (f >= 0.999) return '';
+  const hit = SUGAR_LEVELS.filter(o => Math.abs(o.v - f) < 0.01)[0];
+  return hit ? hit.t : '';
+}
+
+function levelIndex(sugar) {
+  const f = sugarFraction(sugar);
+  let best = 4, gap = 9;
+  SUGAR_LEVELS.forEach((o, i) => {
+    const d = Math.abs(o.v - f);
+    if (d < gap) { gap = d; best = i; }
+  });
+  return best;
+}
+
+/* 五档里有值的直接取，空缺的按左右最近已知点插值 */
+function kcalFromK5(arr, idx) {
+  if (!Array.isArray(arr)) return null;
+  const ok = i => typeof arr[i] === 'number' && isFinite(arr[i]);
+  if (ok(idx)) return arr[idx];
+  let lo = -1, hi = -1;
+  for (let i = idx; i >= 0; i--) if (ok(i)) { lo = i; break; }
+  for (let i = idx; i < arr.length; i++) if (ok(i)) { hi = i; break; }
+  if (lo < 0 && hi < 0) return null;
+  if (lo < 0) return arr[hi];
+  if (hi < 0) return arr[lo];
+  if (lo === hi) return arr[lo];
+  return arr[lo] + (arr[hi] - arr[lo]) * (idx - lo) / (hi - lo);
+}
+
+function kcalWithSugar(r, sugar) {
+  if (!r) return 0;
+  const idx = levelIndex(sugar);
+  const fromK5 = kcalFromK5(r.k5, idx);
+  if (fromK5 !== null) return Math.max(0, fromK5);
+
+  const full = num(r.kcal);
+  const none = r.kcalNone === undefined ? full : num(r.kcalNone);
+  const t = SUGAR_LEVELS[idx].v;
+  return Math.max(0, none + (full - none) * t);
+}
+
 function logNutrition(log) {
   const r = byId(S.recipes, log.recipeId);
   if (!r) return { caffeine: 0, water: 0, kcal: 0 };
-  return { caffeine: num(r.caffeine), water: num(r.ml), kcal: num(r.kcal) };
+  return { caffeine: num(r.caffeine), water: num(r.ml), kcal: kcalWithSugar(r, log.sugar) };
 }
 
 function totalsOf(logs) {
@@ -624,12 +718,12 @@ function renderToday() {
     list.innerHTML = logs.map(l => {
       const r = byId(S.recipes, l.recipeId);
       const n = logNutrition(l);
-      const tags = [l.ice, l.sugar === 'less' ? '半糖' : l.sugar === 'none' ? '无糖' : '']
+      const tags = [l.ice, sugarLabel(l.sugar)]
         .filter(Boolean).map(x => `<span class="tag">${esc(x)}</span>`).join('');
       return `<li>
         <div class="log-time">${fmtTime(l.ts)}</div>
         <div class="log-main">
-          <div class="log-name">${esc(r ? r.name : '已删除的饮品')}</div>
+          <div class="log-name">${esc(r ? r.name : '已删除的饮品')}${tags}</div>
           <div class="log-meta">${Math.round(n.water)}ml · 咖啡因 ${Math.round(n.caffeine)}mg · ${Math.round(n.kcal)}kcal</div>
         </div>
         <div class="log-price">¥${money(num(l.price))}</div>
@@ -839,12 +933,38 @@ function defaultRecipe() {
   return S.recipes.find(r => !r.plain) || S.recipes[0];
 }
 
+function brandOf(r) {
+  return String((r && r.brand) || '').trim() || '其他';
+}
+
+/* 品牌排序：最近点得多的在前，没用过的按饮品库里的顺序 */
+function brandOrder() {
+  const counts = {};
+  for (const l of S.logs) {
+    const r = byId(S.recipes, l.recipeId);
+    if (!r) continue;
+    const b = brandOf(r);
+    counts[b] = (counts[b] || 0) + 1;
+  }
+  const seen = [];
+  for (const r of S.recipes) {
+    const b = brandOf(r);
+    if (seen.indexOf(b) < 0) seen.push(b);
+  }
+  return seen.sort((x, y) => {
+    if (x === '其他') return 1;          // 「其他」永远排最后
+    if (y === '其他') return -1;
+    return (counts[y] || 0) - (counts[x] || 0);
+  });
+}
+
 function openAdd(recipeId) {
   const first = byId(S.recipes, recipeId) || defaultRecipe();
   const st = {
     recipeId: first ? first.id : '',
+    brand: first ? brandOf(first) : '全部',
     ice: '常温',
-    sugar: 'normal',
+    sugar: 1,
     price: first ? num(first.price) : 0,
     ts: Date.now()
   };
@@ -852,11 +972,9 @@ function openAdd(recipeId) {
   openSheet(`
     <div class="sheet-head"><h1>记一杯</h1><button class="icon-btn" data-close aria-label="关闭">✕</button></div>
     <div class="sheet-body">
-      <div class="field-label">喝的是什么</div>
-      <div class="chips" id="pickDrink">
-        ${S.recipes.map(r => `<button class="chip ${r.id === st.recipeId ? 'on' : ''}" data-drink="${esc(r.id)}">${esc(r.name)}</button>`).join('')}
-        <button class="chip" data-drink="__new__">＋ 新饮品</button>
-      </div>
+      <div class="field-label">喝的是什么 <span class="muted small">先点品牌</span></div>
+      <div class="chips" id="brandRow"></div>
+      <div class="chips" id="drinkArea" style="margin-top:10px"></div>
 
       <div id="optArea"></div>
 
@@ -873,6 +991,20 @@ function openAdd(recipeId) {
     </div>
   `, { type: 'add', st });
 
+  const renderBrands = () => {
+    const list = ['全部'].concat(brandOrder());
+    $('#brandRow').innerHTML = list.map(b =>
+      `<button class="chip ${st.brand === b ? 'on' : ''}" data-brand="${esc(b)}">${esc(b)}</button>`
+    ).join('');
+  };
+
+  const renderDrinks = () => {
+    const items = S.recipes.filter(r => st.brand === '全部' || brandOf(r) === st.brand);
+    $('#drinkArea').innerHTML =
+      items.map(r => `<button class="chip ${r.id === st.recipeId ? 'on' : ''}" data-drink="${esc(r.id)}">${esc(r.name)}</button>`).join('') +
+      `<button class="chip" data-drink="__new__" style="border-style:dashed">＋ 新饮品</button>`;
+  };
+
   const renderOpts = () => {
     const r = byId(S.recipes, st.recipeId);
     const area = $('#optArea');
@@ -882,42 +1014,64 @@ function openAdd(recipeId) {
       area.innerHTML = `<div class="fixed-note">${esc(r.name)}是包装饮品，冰和糖度都是固定的</div>`;
       return;
     }
+    const noneKcal = r.kcalNone === undefined ? num(r.kcal) : num(r.kcalNone);
+    const sugarHtml = num(r.kcal) > noneKcal ? `
+      <div class="field-label">糖 <span class="muted small">会改变热量</span></div>
+      <div class="chips compact" id="pickSugar">
+        ${SUGAR_LEVELS.map(o => `<button class="chip ${sugarFraction(st.sugar) === o.v ? 'on' : ''}" data-sugar="${o.v}">${o.t}</button>`).join('')}
+      </div>` : '';
     area.innerHTML = `
       <div class="field-label">冰</div>
       <div class="chips" id="pickIce">
         ${ICE_OPTIONS.map(v => `<button class="chip ${v === st.ice ? 'on' : ''}" data-ice="${v}">${v}</button>`).join('')}
-      </div>
-      <div class="field-label">糖 <span class="muted small">仅作备注，不影响热量</span></div>
-      <div class="chips" id="pickSugar">
-        ${SUGAR_OPTIONS.map(o => `<button class="chip ${o.v === st.sugar ? 'on' : ''}" data-sugar="${o.v}">${o.t}</button>`).join('')}
-      </div>`;
+      </div>` + sugarHtml;
   };
 
   const refresh = () => {
     const r = byId(S.recipes, st.recipeId);
-    if (!r) { $('#addPreview').innerHTML = '还没有可选的饮品，点上面的「＋ 新饮品」建一个。'; return; }
+    if (!r) { $('#addPreview').innerHTML = '还没有可选的饮品，点「＋ 新饮品」建一个。'; return; }
     let html = `预计 咖啡因 <b>${Math.round(num(r.caffeine))}mg</b>`;
-    if (num(r.kcal) > 0) html += ` · 热量 <b>${Math.round(num(r.kcal))}kcal</b>`;
+    const kk = kcalWithSugar(r, st.sugar);
+    if (kk > 0) html += ` · 热量 <b>${Math.round(kk)}kcal</b>`;
     if (num(r.caffeine) > 0) {
       html += `<br><span class="muted">喝完这杯，今天${caffeineLeftText(caffeineLeft(num(r.caffeine)), true)}</span>`;
     }
     $('#addPreview').innerHTML = html;
   };
 
-  const sync = () => { renderOpts(); refresh(); };
+  const pickRecipe = id => {
+    st.recipeId = id;
+    const r = byId(S.recipes, id);
+    if (r) {
+      st.price = num(r.price);
+      $('#priceInput').value = money(st.price);
+    }
+  };
 
-  sheetRoot.querySelector('#pickDrink').addEventListener('click', e => {
-    const b = e.target.closest('[data-drink]'); if (!b) return;
-    if (b.dataset.drink === '__new__') { openRecipeEditor(null, true); return; }
-    st.recipeId = b.dataset.drink;
-    const r = byId(S.recipes, st.recipeId);
-    st.price = r ? num(r.price) : st.price;
-    $$('#pickDrink .chip').forEach(x => x.classList.toggle('on', x.dataset.drink === st.recipeId));
-    $('#priceInput').value = money(st.price);
-    sync();
+  /* 品牌行 */
+  $('#brandRow').addEventListener('click', e => {
+    const b = e.target.closest('[data-brand]');
+    if (!b) return;
+    st.brand = b.dataset.brand;
+    const cur = byId(S.recipes, st.recipeId);
+    const stillHere = st.brand === '全部' ? !!cur : (cur && brandOf(cur) === st.brand);
+    if (!stillHere) {
+      const items = S.recipes.filter(r => st.brand === '全部' || brandOf(r) === st.brand);
+      if (items.length) pickRecipe(items[0].id);
+    }
+    renderBrands(); renderDrinks(); renderOpts(); refresh();
   });
 
-  // 冰 / 糖：挂在 #optArea 上，切换饮品重建内容后依然有效
+  /* 商品行 */
+  $('#drinkArea').addEventListener('click', e => {
+    const b = e.target.closest('[data-drink]');
+    if (!b) return;
+    if (b.dataset.drink === '__new__') { openRecipeEditor(null, true); return; }
+    pickRecipe(b.dataset.drink);
+    renderDrinks(); renderOpts(); refresh();
+  });
+
+  /* 冰 / 糖 */
   const optArea = $('#optArea');
   if (optArea) {
     optArea.addEventListener('click', e => {
@@ -929,13 +1083,17 @@ function openAdd(recipeId) {
       }
       const sug = e.target.closest('[data-sugar]');
       if (sug) {
-        st.sugar = sug.dataset.sugar;
-        $$('#pickSugar .chip').forEach(x => x.classList.toggle('on', x.dataset.sugar === st.sugar));
+        st.sugar = num(sug.dataset.sugar);
+        $$('#pickSugar .chip').forEach(x => x.classList.toggle('on', num(x.dataset.sugar) === st.sugar));
+        refresh();
       }
     });
   }
 
-  sync();
+  renderBrands();
+  renderDrinks();
+  renderOpts();
+  refresh();
 }
 function saveLog() {
   const st = SHEET && SHEET.st;
@@ -969,9 +1127,11 @@ function openRecipeEditor(id, backToAdd) {
   const d = r
     ? {
         name: r.name, brand: r.brand || '', ml: num(r.ml), caffeine: num(r.caffeine),
-        kcal: num(r.kcal), price: num(r.price), adjustable: r.adjustable !== false, plain: !!r.plain
+        kcal: num(r.kcal), kcalNone: r.kcalNone === undefined ? num(r.kcal) : num(r.kcalNone),
+        k5: Array.isArray(r.k5) ? r.k5.slice(0, 5) : null,
+        price: num(r.price), adjustable: r.adjustable !== false, plain: !!r.plain
       }
-    : { name: '', brand: '', ml: 473, caffeine: 0, kcal: 0, price: 0, adjustable: true, plain: false };
+    : { name: '', brand: '', ml: 473, caffeine: 0, kcal: 0, kcalNone: 0, price: 0, adjustable: true, plain: false };
 
   openSheet(`
     <div class="sheet-head"><h1>${r ? '编辑饮品' : '新建饮品'}</h1><button class="icon-btn" data-close>✕</button></div>
@@ -984,9 +1144,20 @@ function openRecipeEditor(id, backToAdd) {
       <div class="num-grid" style="margin-top:16px">
         <div><div class="field-label" style="margin-top:0">杯型 ml</div><input class="input" type="number" inputmode="numeric" id="rMl" value="${d.ml}"></div>
         <div><div class="field-label" style="margin-top:0">参考单价 ¥</div><input class="input" type="number" inputmode="decimal" step="0.5" id="rPrice" value="${money(d.price)}"></div>
-        <div><div class="field-label" style="margin-top:0">咖啡因 mg</div><input class="input" type="number" inputmode="decimal" id="rCaf" value="${r1(d.caffeine)}"></div>
-        <div><div class="field-label" style="margin-top:0">热量 kcal</div><input class="input" type="number" inputmode="numeric" id="rKcal" value="${Math.round(d.kcal)}"></div>
+        <div style="grid-column:span 2"><div class="field-label" style="margin-top:0">咖啡因 mg</div><input class="input" type="number" inputmode="decimal" id="rCaf" value="${r1(d.caffeine)}"></div>
       </div>
+
+      <div class="field-label">各糖度热量 kcal <span class="muted small">只知道两端的填两端，中间留空自动补</span></div>
+      <div class="kcal5">
+        ${SUGAR_LEVELS.map((o, i) => {
+          let v = '';
+          if (d.k5 && d.k5[i] != null) v = Math.round(d.k5[i]);
+          else if (i === 0) v = Math.round(d.kcalNone === undefined ? d.kcal : d.kcalNone);
+          else if (i === 4) v = Math.round(d.kcal);
+          return `<label><span>${o.t}</span><input class="input" type="number" inputmode="numeric" data-k5="${i}" value="${v}"></label>`;
+        }).join('')}
+      </div>
+      <p class="fine" style="margin-top:8px">全糖和不加糖填一样，就不显示糖度选项（比如 Manner 那两杯）。</p>
 
       <label class="check"><input type="checkbox" id="rAdjust" ${d.adjustable ? 'checked' : ''}> 现做的，可以选冰和糖度</label>
       <label class="check"><input type="checkbox" id="rPlain" ${d.plain ? 'checked' : ''}> 这是白水，计入「纯饮水」</label>
@@ -1009,11 +1180,20 @@ function saveRecipe() {
     brand: $('#rBrand').value.trim(),
     ml: num($('#rMl').value) || 350,
     caffeine: num($('#rCaf').value),
-    kcal: num($('#rKcal').value),
     price: num($('#rPrice').value),
     adjustable: $('#rAdjust').checked,
     plain: $('#rPlain').checked
   };
+
+  const k5 = [null, null, null, null, null];
+  $$('[data-k5]').forEach(el => {
+    const v = String(el.value).trim();
+    k5[Number(el.dataset.k5)] = v === '' ? null : num(v);
+  });
+  const fullKcal = k5[4] == null ? 0 : k5[4];
+  patch.k5 = k5;
+  patch.kcal = fullKcal;
+  patch.kcalNone = k5[0] == null ? fullKcal : k5[0];
 
   let savedId = SHEET.id;
   if (SHEET.id) {
